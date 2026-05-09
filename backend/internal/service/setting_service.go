@@ -223,22 +223,32 @@ func defaultLoginAgreementDocuments() []LoginAgreementDocument {
 		{
 			ID:        "terms",
 			Title:     "服务条款",
-			ContentMD: "",
+			ContentMD: "# 服务条款\n\n欢迎使用 " + defaultBusinessSiteName + "。本服务是面向个人和小团队的 AI API 中转服务，提供账号管理、API Key 分发、用量统计、余额或套餐管理等能力。\n\n## 服务性质\n\n- 本服务不是 OpenAI、Anthropic、Google 或其他上游服务商的官方网站，也不代表与上述服务商存在授权、赞助或合作关系。\n- 上游服务的可用性、模型能力、速率限制和价格规则可能变化。\n- 用户应自行确认自己的使用场景符合所在地区法律法规及上游服务商的适用条款。\n\n## 账户与使用\n\n- 用户应妥善保管自己的登录账号和 API Key，不得公开泄露、倒卖、滥用或用于攻击、垃圾信息、违法内容等用途。\n- 平台有权根据异常请求、欠费、风控命中、上游限制或服务安全需要，暂停或限制相关账号、密钥、分组或套餐。\n- 平台展示的用量、余额、扣费和请求记录是结算与排障的重要依据。",
 		},
 		{
 			ID:        "usage-policy",
 			Title:     "使用政策",
-			ContentMD: "",
+			ContentMD: "# 使用政策\n\n为保证服务稳定性和长期可用，用户不得用于违法、欺诈、攻击、恶意扫描、撞库、垃圾信息、侵权、绕过安全限制等场景。\n\n不得批量转售账号、共享密钥、公开密钥、搭建无风控的二级中转或让未知第三方直接滥用平台资源。高并发、自动化任务、长时间批处理和商业客户接入前，请先与平台支持确认额度和使用方式。",
+		},
+		{
+			ID:        "privacy-policy",
+			Title:     "隐私说明",
+			ContentMD: "# 隐私说明\n\n平台会处理必要的账户信息、用量信息、订单信息和支持信息，用于提供服务、计算费用、展示用量、排查故障、防止滥用、处理退款和满足必要的合规要求。\n\n用户通过 API 提交的内容会被转发给对应上游模型服务商处理。请不要提交身份证件、银行卡、密码、医疗病历、商业机密等高度敏感内容。",
+		},
+		{
+			ID:        "refund-policy",
+			Title:     "退款说明",
+			ContentMD: "# 退款说明\n\n本服务提供的是数字化 API 中转服务，资源一旦被消耗通常无法从上游撤回，因此退款会按实际情况审核。\n\n误充值、重复支付且余额未使用，或平台侧长期故障导致服务不可用时，可以联系平台支持申请处理。已经消耗的余额、Token、套餐天数或专属资源，通常不支持退款。",
 		},
 		{
 			ID:        "supported-regions",
 			Title:     "支持的国家和地区",
-			ContentMD: "",
+			ContentMD: "# 支持的国家和地区\n\n平台面向允许访问相关 AI 服务和支付服务的地区提供能力。不同上游模型、账号类型、支付渠道和网络环境可能存在地区限制。\n\n用户应确认自己所在地区、业务主体、最终用户和使用场景符合适用法律法规、出口管制、制裁规则以及上游服务商条款。",
 		},
 		{
 			ID:        "service-specific-terms",
 			Title:     "服务特定条款",
-			ContentMD: "",
+			ContentMD: "# 服务特定条款\n\n不同模型和能力可能对应不同规则。OpenAI、Claude、Gemini、Antigravity 等能力的可用性取决于平台接入的上游资源和对应服务商规则。\n\n平台可能根据账号池健康度、套餐等级、风控状态和成本变化调整可用模型、并发、倍率或路由策略。",
 		},
 	}
 }
@@ -694,9 +704,9 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		LoginAgreementDocuments:          loginAgreementDocuments,
 		TurnstileEnabled:                 settings[SettingKeyTurnstileEnabled] == "true",
 		TurnstileSiteKey:                 settings[SettingKeyTurnstileSiteKey],
-		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
+		SiteName:                         resolveBusinessSiteName(settings[SettingKeySiteName]),
 		SiteLogo:                         settings[SettingKeySiteLogo],
-		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
+		SiteSubtitle:                     resolveBusinessSiteSubtitle(settings[SettingKeySiteSubtitle]),
 		APIBaseURL:                       settings[SettingKeyAPIBaseURL],
 		ContactInfo:                      settings[SettingKeyContactInfo],
 		DocURL:                           settings[SettingKeyDocURL],
@@ -2044,9 +2054,9 @@ func (s *SettingService) IsTotpEncryptionKeyConfigured() bool {
 func (s *SettingService) GetSiteName(ctx context.Context) string {
 	value, err := s.settingRepo.GetValue(ctx, SettingKeySiteName)
 	if err != nil || value == "" {
-		return "Sub2API"
+		return defaultBusinessSiteName
 	}
-	return value
+	return resolveBusinessSiteName(value)
 }
 
 // GetDefaultConcurrency 获取默认并发量
@@ -2225,7 +2235,8 @@ func (s *SettingService) InitializeDefaultSettings(ctx context.Context) error {
 		SettingKeyLoginAgreementMode:                       defaultLoginAgreementMode,
 		SettingKeyLoginAgreementUpdatedAt:                  defaultLoginAgreementDate,
 		SettingKeyLoginAgreementDocuments:                  loginAgreementDocumentsJSON,
-		SettingKeySiteName:                                 "Sub2API",
+		SettingKeySiteName:                                 defaultBusinessSiteName,
+		SettingKeySiteSubtitle:                             defaultBusinessSiteSubtitle,
 		SettingKeySiteLogo:                                 "",
 		SettingKeyPurchaseSubscriptionEnabled:              "false",
 		SettingKeyPurchaseSubscriptionURL:                  "",
@@ -2398,9 +2409,9 @@ func (s *SettingService) parseSettings(settings map[string]string) *SystemSettin
 		TurnstileEnabled:                 settings[SettingKeyTurnstileEnabled] == "true",
 		TurnstileSiteKey:                 settings[SettingKeyTurnstileSiteKey],
 		TurnstileSecretKeyConfigured:     settings[SettingKeyTurnstileSecretKey] != "",
-		SiteName:                         s.getStringOrDefault(settings, SettingKeySiteName, "Sub2API"),
+		SiteName:                         resolveBusinessSiteName(settings[SettingKeySiteName]),
 		SiteLogo:                         settings[SettingKeySiteLogo],
-		SiteSubtitle:                     s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
+		SiteSubtitle:                     resolveBusinessSiteSubtitle(settings[SettingKeySiteSubtitle]),
 		APIBaseURL:                       settings[SettingKeyAPIBaseURL],
 		ContactInfo:                      settings[SettingKeyContactInfo],
 		DocURL:                           settings[SettingKeyDocURL],

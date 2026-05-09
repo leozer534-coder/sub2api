@@ -15,25 +15,14 @@
   <!-- Default Home Page -->
   <div
     v-else
-    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-primary-50/30 to-gray-100 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
+    class="relative flex min-h-screen flex-col overflow-hidden bg-gradient-to-br from-gray-50 via-white to-primary-50/40 dark:from-dark-950 dark:via-dark-900 dark:to-dark-950"
   >
-    <!-- Background Decorations -->
+    <!-- Background texture -->
     <div class="pointer-events-none absolute inset-0 overflow-hidden">
-      <div
-        class="absolute -right-40 -top-40 h-96 w-96 rounded-full bg-primary-400/20 blur-3xl"
-      ></div>
-      <div
-        class="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-primary-500/15 blur-3xl"
-      ></div>
-      <div
-        class="absolute left-1/3 top-1/4 h-72 w-72 rounded-full bg-primary-300/10 blur-3xl"
-      ></div>
-      <div
-        class="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-primary-400/10 blur-3xl"
-      ></div>
       <div
         class="absolute inset-0 bg-[linear-gradient(rgba(20,184,166,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(20,184,166,0.03)_1px,transparent_1px)] bg-[size:64px_64px]"
       ></div>
+      <div class="absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-primary-100/70 to-transparent dark:from-primary-950/25"></div>
     </div>
 
     <!-- Header -->
@@ -117,6 +106,9 @@
         <div class="mb-12 flex flex-col items-center justify-between gap-12 lg:flex-row lg:gap-16">
           <!-- Left: Text Content -->
           <div class="flex-1 text-center lg:text-left">
+            <p class="mb-3 text-sm font-semibold text-primary-700 dark:text-primary-300">
+              {{ businessBrand.productLine }}
+            </p>
             <h1
               class="mb-4 text-4xl font-bold text-gray-900 dark:text-white md:text-5xl lg:text-6xl"
             >
@@ -391,13 +383,21 @@
             {{ t('home.docs') }}
           </a>
           <a
-            :href="githubUrl"
+            :href="sourceRepository"
             target="_blank"
             rel="noopener noreferrer"
             class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
           >
-            GitHub
+            开源说明
           </a>
+          <router-link
+            v-for="link in legalLinks"
+            :key="link.id"
+            :to="`/legal/${link.id}`"
+            class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
+          >
+            {{ link.title }}
+          </router-link>
         </div>
       </div>
     </footer>
@@ -410,6 +410,12 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore, useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
+import {
+  businessBrand,
+  buildBusinessLegalDocuments,
+  resolveBusinessSiteName,
+  resolveBusinessSiteSubtitle,
+} from '@/config/businessBrand'
 
 const { t } = useI18n()
 
@@ -417,9 +423,9 @@ const authStore = useAuthStore()
 const appStore = useAppStore()
 
 // Site settings - directly from appStore (already initialized from injected config)
-const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
+const siteName = computed(() => resolveBusinessSiteName(appStore.cachedPublicSettings?.site_name || appStore.siteName))
 const siteLogo = computed(() => appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '')
-const siteSubtitle = computed(() => appStore.cachedPublicSettings?.site_subtitle || 'AI API Gateway Platform')
+const siteSubtitle = computed(() => resolveBusinessSiteSubtitle(appStore.cachedPublicSettings?.site_subtitle || businessBrand.subtitle))
 const docUrl = computed(() => appStore.cachedPublicSettings?.doc_url || appStore.docUrl || '')
 const homeContent = computed(() => appStore.cachedPublicSettings?.home_content || '')
 
@@ -432,8 +438,12 @@ const isHomeContentUrl = computed(() => {
 // Theme
 const isDark = ref(document.documentElement.classList.contains('dark'))
 
-// GitHub URL
-const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
+const sourceRepository = businessBrand.sourceRepository
+const legalLinks = computed(() =>
+  buildBusinessLegalDocuments(siteName.value, appStore.contactInfo)
+    .filter((doc) => ['terms', 'privacy-policy', 'refund-policy'].includes(doc.id))
+    .map((doc) => ({ id: doc.id, title: doc.title }))
+)
 
 // Auth state
 const isAuthenticated = computed(() => authStore.isAuthenticated)

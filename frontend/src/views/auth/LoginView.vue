@@ -210,6 +210,7 @@ import { getPublicSettings, isTotp2FARequired, isWeChatWebOAuthEnabled } from '@
 import type { LoginAgreementDocument, TotpLoginResponse } from '@/types'
 import { extractI18nErrorMessage } from '@/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/utils/oauthAffiliate'
+import { withBusinessBrandDefaults } from '@/config/businessBrand'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -307,7 +308,7 @@ onMounted(async () => {
   }
 
   try {
-    const settings = await getPublicSettings()
+    const settings = withBusinessBrandDefaults(await getPublicSettings())
     turnstileEnabled.value = settings.turnstile_enabled
     turnstileSiteKey.value = settings.turnstile_site_key || ''
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled

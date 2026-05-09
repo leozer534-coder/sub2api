@@ -244,6 +244,7 @@ export default {
 
   // Common
   common: {
+    login: 'Login',
     loading: 'Loading...',
     submitting: 'Submitting...',
     justNow: 'just now',

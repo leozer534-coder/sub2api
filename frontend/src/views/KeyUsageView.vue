@@ -353,7 +353,7 @@
             target="_blank"
             rel="noopener noreferrer"
             class="text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-dark-400 dark:hover:text-white"
-          >GitHub</a>
+          >开源说明</a>
         </div>
       </div>
     </footer>
@@ -366,16 +366,17 @@ import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
+import { businessBrand, resolveBusinessSiteName } from '@/config/businessBrand'
 
 const { t, locale } = useI18n()
 const appStore = useAppStore()
 
 // ==================== Site Settings (same as HomeView) ====================
 
-const siteName = computed(() => appStore.cachedPublicSettings?.site_name || appStore.siteName || 'Sub2API')
+const siteName = computed(() => resolveBusinessSiteName(appStore.cachedPublicSettings?.site_name || appStore.siteName))
 const siteLogo = computed(() => appStore.cachedPublicSettings?.site_logo || appStore.siteLogo || '')
 const docUrl = computed(() => appStore.cachedPublicSettings?.doc_url || appStore.docUrl || '')
-const githubUrl = 'https://github.com/Wei-Shaw/sub2api'
+const githubUrl = businessBrand.sourceRepository
 
 // ==================== Theme (same as HomeView) ====================
 

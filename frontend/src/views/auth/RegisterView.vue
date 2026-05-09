@@ -327,6 +327,7 @@ import {
   resolveAffiliateReferralCode
 } from '@/utils/oauthAffiliate'
 import type { LoginAgreementDocument } from '@/types'
+import { businessBrand, resolveBusinessSiteName, withBusinessBrandDefaults } from '@/config/businessBrand'
 
 const { t, locale } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -352,7 +353,7 @@ const promoCodeEnabled = ref<boolean>(true)
 const invitationCodeEnabled = ref<boolean>(false)
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
-const siteName = ref<string>('Sub2API')
+const siteName = ref<string>(businessBrand.name)
 const linuxdoOAuthEnabled = ref<boolean>(false)
 const wechatOAuthEnabled = ref<boolean>(false)
 const oidcOAuthEnabled = ref<boolean>(false)
@@ -453,14 +454,14 @@ onMounted(async () => {
   syncAffiliateReferralCode()
 
   try {
-    const settings = await getPublicSettings()
+    const settings = withBusinessBrandDefaults(await getPublicSettings())
     registrationEnabled.value = settings.registration_enabled
     emailVerifyEnabled.value = settings.email_verify_enabled
     promoCodeEnabled.value = settings.promo_code_enabled
     invitationCodeEnabled.value = settings.invitation_code_enabled
     turnstileEnabled.value = settings.turnstile_enabled
     turnstileSiteKey.value = settings.turnstile_site_key || ''
-    siteName.value = settings.site_name || 'Sub2API'
+    siteName.value = resolveBusinessSiteName(settings.site_name)
     linuxdoOAuthEnabled.value = settings.linuxdo_oauth_enabled
     wechatOAuthEnabled.value = isWeChatWebOAuthEnabled(settings)
     oidcOAuthEnabled.value = settings.oidc_oauth_enabled

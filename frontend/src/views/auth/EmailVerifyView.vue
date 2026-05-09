@@ -172,6 +172,7 @@ import {
   loadAffiliateReferralCode,
   oauthAffiliatePayload
 } from '@/utils/oauthAffiliate'
+import { businessBrand, resolveBusinessSiteName, withBusinessBrandDefaults } from '@/config/businessBrand'
 
 const { t, locale } = useI18n()
 
@@ -228,7 +229,7 @@ const hasRegisterData = ref<boolean>(false)
 // Public settings
 const turnstileEnabled = ref<boolean>(false)
 const turnstileSiteKey = ref<string>('')
-const siteName = ref<string>('Sub2API')
+const siteName = ref<string>(businessBrand.name)
 const registrationEmailSuffixWhitelist = ref<string[]>([])
 
 // Turnstile for resend
@@ -290,10 +291,10 @@ onMounted(async () => {
 
   // Load public settings
   try {
-    const settings = await getPublicSettings()
+    const settings = withBusinessBrandDefaults(await getPublicSettings())
     turnstileEnabled.value = settings.turnstile_enabled
     turnstileSiteKey.value = settings.turnstile_site_key || ''
-    siteName.value = settings.site_name || 'Sub2API'
+    siteName.value = resolveBusinessSiteName(settings.site_name)
     registrationEmailSuffixWhitelist.value = normalizeRegistrationEmailSuffixWhitelist(
       settings.registration_email_suffix_whitelist || []
     )

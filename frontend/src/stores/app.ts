@@ -13,6 +13,11 @@ import {
   type ReleaseInfo
 } from '@/api/admin/system'
 import { getPublicSettings as fetchPublicSettingsAPI } from '@/api/auth'
+import {
+  businessBrand,
+  resolveBusinessSiteName,
+  withBusinessBrandDefaults,
+} from '@/config/businessBrand'
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================
@@ -25,7 +30,7 @@ export const useAppStore = defineStore('app', () => {
   // Public settings cache state
   const publicSettingsLoaded = ref<boolean>(false)
   const publicSettingsLoading = ref<boolean>(false)
-  const siteName = ref<string>('Sub2API')
+  const siteName = ref<string>(businessBrand.name)
   const siteLogo = ref<string>('')
   const siteVersion = ref<string>('')
   const contactInfo = ref<string>('')
@@ -288,16 +293,17 @@ export const useAppStore = defineStore('app', () => {
    * Apply settings to store state (internal helper to avoid code duplication)
    */
   function applySettings(config: PublicSettings): void {
+    const brandedConfig = withBusinessBrandDefaults(config)
     if (typeof window !== 'undefined') {
-      window.__APP_CONFIG__ = { ...config }
+      window.__APP_CONFIG__ = { ...brandedConfig }
     }
-    cachedPublicSettings.value = config
-    siteName.value = config.site_name || 'Sub2API'
-    siteLogo.value = config.site_logo || ''
-    siteVersion.value = config.version || ''
-    contactInfo.value = config.contact_info || ''
-    apiBaseUrl.value = config.api_base_url || ''
-    docUrl.value = config.doc_url || ''
+    cachedPublicSettings.value = brandedConfig
+    siteName.value = resolveBusinessSiteName(brandedConfig.site_name)
+    siteLogo.value = brandedConfig.site_logo || ''
+    siteVersion.value = brandedConfig.version || ''
+    contactInfo.value = brandedConfig.contact_info || ''
+    apiBaseUrl.value = brandedConfig.api_base_url || ''
+    docUrl.value = brandedConfig.doc_url || ''
     publicSettingsLoaded.value = true
   }
 
@@ -329,7 +335,7 @@ export const useAppStore = defineStore('app', () => {
         turnstile_site_key: '',
         site_name: siteName.value,
         site_logo: siteLogo.value,
-        site_subtitle: '',
+        site_subtitle: businessBrand.subtitle,
         api_base_url: apiBaseUrl.value,
         contact_info: contactInfo.value,
         doc_url: docUrl.value,

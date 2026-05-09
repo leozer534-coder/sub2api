@@ -10,6 +10,7 @@ import { useAdminSettingsStore } from '@/stores/adminSettings'
 import { useNavigationLoadingState } from '@/composables/useNavigationLoading'
 import { useRoutePrefetch } from '@/composables/useRoutePrefetch'
 import { resolveDocumentTitle } from './title'
+import { resolveBusinessSiteName } from '@/config/businessBrand'
 
 /**
  * Route definitions with lazy loading
@@ -704,7 +705,7 @@ router.beforeEach((to, _from, next) => {
     const menuItem = publicItems.find((item) => item.id === id)
       ?? (authStore.isAdmin ? adminSettingsStore.customMenuItems.find((item) => item.id === id) : undefined)
     if (menuItem?.label) {
-      const siteName = appStore.siteName || 'Sub2API'
+      const siteName = resolveBusinessSiteName(appStore.siteName)
       document.title = `${menuItem.label} - ${siteName}`
     } else {
       document.title = resolveDocumentTitle(to.meta.title, appStore.siteName, to.meta.titleKey as string)
